@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route, Link } from "react-router-dom";
-import { Layout, Typography, Space} from "antd";
+import { Layout, Typography, Space } from "antd";
 import { Navbar, Exchanges, Homepage, Cryptocurrencies, News, CryptoDetails } from './components';
 import './App.css';
 
@@ -23,9 +23,9 @@ const App = () => {
                     </div>
                 </Layout>
                 <div className="footer">
-                    <Typography.Title level={5} style={{ color: 'white', textAlign: 'center'}}>
+                    <Typography.Title level={5} style={{ color: 'white', textAlign: 'center' }}>
                         Cryptoverse <br />
-                        All right reserved
+                        All right reserved © {new Date().getFullYear()}
                     </Typography.Title>
                     <Space>
                         <Link to="/">Home</Link>
@@ -33,7 +33,7 @@ const App = () => {
                         <Link to="/news">News</Link>
                     </Space>
                 </div>
-             </div>            
+            </div>
         </div>
     );
 }

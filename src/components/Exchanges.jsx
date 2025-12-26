@@ -7,47 +7,45 @@ import { useGetExchangesQuery } from '../services/cryptoApi';
 import Loader from './Loader';
 
 const { Text } = Typography;
-const { Panel } = Collapse;
 
 const Exchanges = () => {
   const { data, isFetching } = useGetExchangesQuery();
-  const coinsList = data?.data?.coins;
+  const exchangesList = data?.data?.exchanges;
 
-  if (isFetching) return <Loader />;
-  
-console.log(data);
+  if (isFetching || !exchangesList) return <Loader />;
 
   return (
     <>
       <Row>
-        <Col span={6}>Max Amount</Col>
-        <Col span={6}>Total Synced AT</Col>
-        <Col span={6}>Total Amount</Col>
-        <Col span={6}>Circulating Amount</Col>
+        <Col span={6}>Exchanges</Col>
+        <Col span={6}>24h Trade Volume</Col>
+        <Col span={6}>Country</Col>
+        <Col span={6}>Year Established</Col>
       </Row>
       <Row>
-        {coinsList.map((coins) => (
-          <Col span={24}>
-            <Collapse>
-              <Panel
-                key={coins.uuid}
-                showArrow={false}
-                header={(
-                  <Row key={coins.uuid}>
-                    <Col span={6}>
-                      <Text><strong>{coins.symbol}.</strong></Text>
-                      <Avatar className="exchange-image" src={coins.iconUrl} />
-                      <Text><strong>{coins.name}</strong></Text>
-                    </Col>
-                    <Col span={6}>${coins.symbol}</Col>
-                    <Col span={6}>{coins.name}</Col>
-                    <Col span={6}>{coins.color}%</Col>
-                  </Row>
-                  )}
-              >
-                {coins.name || ''}
-              </Panel>
-            </Collapse>
+        {exchangesList.map((exchange) => (
+          <Col span={24} key={exchange.id}>
+            <Collapse
+              items={[
+                {
+                  key: exchange.id,
+                  showArrow: false,
+                  label: (
+                    <Row key={exchange.id}>
+                      <Col span={6}>
+                        <Text><strong>{exchange.rank}.</strong></Text>
+                        <Avatar className="exchange-image" src={exchange.image} />
+                        <Text><strong>{exchange.name}</strong></Text>
+                      </Col>
+                      <Col span={6}>{exchange.volume24h ? `${millify(exchange.volume24h)} BTC` : 'N/A'}</Col>
+                      <Col span={6}>{exchange.country || 'N/A'}</Col>
+                      <Col span={6}>{exchange.yearEstablished || 'N/A'}</Col>
+                    </Row>
+                  ),
+                  children: HTMLReactParser(exchange.description || '')
+                }
+              ]}
+            />
           </Col>
         ))}
       </Row>

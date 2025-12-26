@@ -17,8 +17,8 @@ const Cryptocurrencies = ({ simplified }) => {
     setCryptos(filteredData);
   }, [cryptosList, searchTerm]);
 
-  if(isFetching) return <Loader />;
-  
+  if (isFetching) return <Loader />;
+
   return (
     <>
       {!simplified && (
@@ -35,9 +35,9 @@ const Cryptocurrencies = ({ simplified }) => {
                 extra={<img className="crypto-image" src={currency.iconUrl} alt="" />}
                 hoverable
               >
-                <p>Price: {millify(currency.price)}</p>
-                <p>Market Cap: {millify(currency.marketCap)}</p>
-                <p>Daily Change: {millify(currency.change)}%</p>
+                <p>Price: ${currency.price ? millify(currency.price) : 'N/A'}</p>
+                <p>Market Cap: ${currency.marketCap ? millify(currency.marketCap) : 'N/A'}</p>
+                <p>Daily Change: {currency.change ? `${millify(currency.change)}%` : 'N/A'}</p>
               </Card>
             </Link>
           </Col>

@@ -1,16 +1,17 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import { BrowserRouter as Router  } from "react-router-dom";
-import 'antd/dist/antd.css';
+import { createRoot } from "react-dom/client";
+import { BrowserRouter as Router } from "react-router-dom";
 import { Provider } from 'react-redux';
 import App from './App';
 import store from './app/store';
 
-ReactDOM.render(
-    <Router>
+const container = document.getElementById('root');
+const root = createRoot(container);
+
+root.render(
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Provider store={store}>
             <App />
         </Provider>
-    </Router>,
-    document.getElementById('root')
+    </Router>
 );
