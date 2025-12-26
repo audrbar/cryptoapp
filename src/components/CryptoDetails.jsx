@@ -25,7 +25,7 @@ const allTimePeriods = [
 const CryptoDetails = () => {
   const { coinUuid } = useParams();
   const [timePeriod, setTimePeriod] = useState('7d');
-  const { data, isFetching } = useGetCryptoDetailsQuery(coinUuid);
+  const { data, isFetching, isError, error } = useGetCryptoDetailsQuery(coinUuid);
   const { data: coinHistory, isFetching: isHistoryFetching } = useGetCryptoHistoryQuery({ coinUuid, timePeriod });
   const cryptoDetails = data?.data?.coin;
 
@@ -67,6 +67,18 @@ const CryptoDetails = () => {
   }, [coinUuid]);
 
   if (isFetching || !cryptoDetails) return <Loader />;
+
+  if (isError) {
+    return (
+      <Col className="coin-detail-container" style={{ padding: '20px' }}>
+        <Title level={3} style={{ color: '#f5222d' }}>⚠️ Unable to Load Cryptocurrency Data</Title>
+        <p>We're experiencing high traffic or API rate limits. Please try again in a few moments.</p>
+        <p style={{ fontSize: '12px', color: '#8c8c8c' }}>
+          Error: {error?.status === 429 ? 'Too many requests - Rate limit exceeded' : 'Failed to fetch data'}
+        </p>
+      </Col>
+    );
+  }
 
   const stats = [
     { title: 'Price to USD', value: `$ ${cryptoDetails?.price ? millify(cryptoDetails.price) : 'N/A'}`, icon: <DollarCircleOutlined /> },

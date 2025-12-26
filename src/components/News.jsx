@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Select, Typography, Row, Col, Avatar, Card } from "antd";
+import { Select, Typography, Row, Col, Avatar, Card, Alert } from "antd";
 import moment from 'moment';
 import Loader from './Loader';
 
@@ -12,12 +12,24 @@ const demoImage = 'http://coinrevolution.com/wp-content/uploads/2020/06/cryptone
 
 const News = ({ simplified }) => {
   const [newsCategory, setNewsCategory] = useState('Cryptocurrency')
-  const { data: cryptoNews } = useGetCryptoNewsQuery({ newsCategory, count: simplified ? 6 : 12 })
+  const { data: cryptoNews, isError: isNewsError } = useGetCryptoNewsQuery({ newsCategory, count: simplified ? 6 : 12 })
   const { data } = useGetCryptosQuery(100, {
     skip: simplified // Skip fetching cryptos list when in simplified mode
   });
 
   if (!cryptoNews?.value) return <Loader />;
+
+  if (isNewsError) {
+    return (
+      <Alert
+        message="Unable to Load News"
+        description="News service is temporarily unavailable. Please check back later."
+        type="info"
+        showIcon
+        style={{ margin: '20px' }}
+      />
+    );
+  }
 
   // Create options array for Ant Design 5
   const selectOptions = [

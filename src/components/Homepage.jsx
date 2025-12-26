@@ -1,7 +1,7 @@
 import React from 'react';
 import millify from 'millify';
 import { Link } from "react-router-dom";
-import { Typography, Row, Col, Statistic } from "antd";
+import { Typography, Row, Col, Statistic, Alert } from "antd";
 import { useGetCryptosQuery } from '../services/cryptoApi';
 import { Cryptocurrencies, News } from '../components';
 import Loader from './Loader';
@@ -9,10 +9,22 @@ import Loader from './Loader';
 const { Title } = Typography;
 
 const Homepage = () => {
-  const { data, isFetching } = useGetCryptosQuery(10);
+  const { data, isFetching, isError } = useGetCryptosQuery(10);
   const cryptos = data?.data?.coins;
 
   if (isFetching || !cryptos) return <Loader />;
+
+  if (isError) {
+    return (
+      <Alert
+        message="Service Temporarily Unavailable"
+        description="We're experiencing high traffic. Data will load automatically once available."
+        type="info"
+        showIcon
+        style={{ margin: '20px' }}
+      />
+    );
+  }
 
   // CoinGecko API doesn't provide global stats directly
   // Calculate approximate stats from the top cryptocurrencies

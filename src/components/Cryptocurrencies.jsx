@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
-import { Card, Row, Col, Input } from "antd";
+import { Card, Row, Col, Input, Alert } from "antd";
 import millify from 'millify';
 import Loader from './Loader';
 import { useGetCryptosQuery } from '../services/cryptoApi';
@@ -8,7 +8,7 @@ import { useGetCryptosQuery } from '../services/cryptoApi';
 
 const Cryptocurrencies = ({ simplified }) => {
   const count = simplified ? 10 : 100;
-  const { data: cryptosList, isFetching } = useGetCryptosQuery(count);
+  const { data: cryptosList, isFetching, isError, error } = useGetCryptosQuery(count);
   const [cryptos, setCryptos] = useState(cryptosList?.data?.coins);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -18,6 +18,18 @@ const Cryptocurrencies = ({ simplified }) => {
   }, [cryptosList, searchTerm]);
 
   if (isFetching) return <Loader />;
+
+  if (isError) {
+    return (
+      <Alert
+        message="Unable to Load Cryptocurrency Data"
+        description={error?.status === 429 ? "Rate limit exceeded. Please wait a moment and refresh the page." : "Failed to fetch cryptocurrency data. Please try again later."}
+        type="warning"
+        showIcon
+        style={{ margin: '20px' }}
+      />
+    );
+  }
 
   return (
     <>

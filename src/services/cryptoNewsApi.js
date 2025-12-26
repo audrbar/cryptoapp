@@ -1,7 +1,30 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { retry } from '@reduxjs/toolkit/query/react';
 
 // Using CryptoCompare API (Free, No API Key Required)
 const baseUrl = 'https://min-api.cryptocompare.com/data/v2';
+
+// Rate limiting for news API
+let lastNewsRequestTime = 0;
+const minNewsRequestInterval = 2000; // 2 seconds between requests
+
+const rateLimitedNewsBaseQuery = async (args, api, extraOptions) => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastNewsRequestTime;
+
+    if (timeSinceLastRequest < minNewsRequestInterval) {
+        await new Promise(resolve => setTimeout(resolve, minNewsRequestInterval - timeSinceLastRequest));
+    }
+
+    lastNewsRequestTime = Date.now();
+
+    const result = await fetchBaseQuery({ baseUrl })(args, api, extraOptions);
+    return result;
+};
+
+const newsBaseQueryWithRetry = retry(rateLimitedNewsBaseQuery, {
+    maxRetries: 1,
+});
 
 // Transform CryptoCompare news data to match the expected format
 const transformNewsData = (data, count) => {
@@ -55,8 +78,8 @@ const transformNewsData = (data, count) => {
 
 export const cryptoNewsApi = createApi({
     reducerPath: 'cryptoNewsApi',
-    baseQuery: fetchBaseQuery({ baseUrl }),
-    keepUnusedDataFor: 300, // Cache news for 5 minutes
+    baseQuery: newsBaseQueryWithRetry,
+    keepUnusedDataFor: 600, // Cache news for 10 minutes
     endpoints: (builder) => ({
         getCryptoNews: builder.query({
             query: ({ newsCategory, count }) => {
@@ -67,7 +90,7 @@ export const cryptoNewsApi = createApi({
                 return `/news/?lang=EN${categories}`;
             },
             transformResponse: (response, meta, arg) => transformNewsData(response, arg.count),
-            keepUnusedDataFor: 300,
+            keepUnusedDataFor: 600, // 10 minutes cache
         })
     })
 });

@@ -1,7 +1,39 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { retry } from '@reduxjs/toolkit/query/react';
 
 // Using CoinGecko API v3 - Free, No API Key Required
 const baseUrl = 'https://api.coingecko.com/api/v3';
+
+// Rate limiting: Add delay between requests
+let lastRequestTime = 0;
+const minRequestInterval = 1000; // 1 second between requests
+
+const rateLimitedBaseQuery = async (args, api, extraOptions) => {
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+
+    if (timeSinceLastRequest < minRequestInterval) {
+        await new Promise(resolve => setTimeout(resolve, minRequestInterval - timeSinceLastRequest));
+    }
+
+    lastRequestTime = Date.now();
+
+    const result = await fetchBaseQuery({
+        baseUrl,
+        prepareHeaders: (headers) => {
+            // Add headers to avoid CORS issues
+            headers.set('Accept', 'application/json');
+            return headers;
+        }
+    })(args, api, extraOptions);
+
+    return result;
+};
+
+// Wrap with retry logic
+const baseQueryWithRetry = retry(rateLimitedBaseQuery, {
+    maxRetries: 2,
+});
 
 // Transform CoinGecko data to match previous data structure
 const transformCryptosData = (data, count) => {
@@ -92,17 +124,17 @@ const getTimePeriodDays = (timePeriod) => {
 
 export const cryptoApi = createApi({
     reducerPath: 'cryptoApi',
-    baseQuery: fetchBaseQuery({ baseUrl }),
-    keepUnusedDataFor: 300, // Cache data for 5 minutes
+    baseQuery: baseQueryWithRetry,
+    keepUnusedDataFor: 600, // Cache data for 10 minutes
     endpoints: (builder) => ({
         getCryptos: builder.query({
             query: (count) => `/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${count}&page=1&sparkline=false&price_change_percentage=24h`,
             transformResponse: (response, meta, arg) => transformCryptosData(response, arg),
-            keepUnusedDataFor: 300,
+            keepUnusedDataFor: 600, // 10 minutes cache
         }),
         getExchanges: builder.query({
             query: () => `/exchanges?per_page=10`,
-            keepUnusedDataFor: 300,
+            keepUnusedDataFor: 600, // 10 minutes cache
             transformResponse: (response) => {
                 if (!response || !Array.isArray(response)) {
                     return { data: { exchanges: [] } };
@@ -127,7 +159,7 @@ export const cryptoApi = createApi({
         getCryptoDetails: builder.query({
             query: (coinId) => `/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=false&developer_data=false`,
             transformResponse: (response) => transformCryptoDetails(response),
-            keepUnusedDataFor: 300,
+            keepUnusedDataFor: 600, // 10 minutes cache
         }),
         getCryptoHistory: builder.query({
             query: ({ coinUuid, timePeriod }) => {
@@ -135,7 +167,7 @@ export const cryptoApi = createApi({
                 return `/coins/${coinUuid}/market_chart?vs_currency=usd&days=${days}`;
             },
             transformResponse: (response, meta, arg) => transformCryptoHistory(response, arg.timePeriod),
-            keepUnusedDataFor: 60,
+            keepUnusedDataFor: 300, // 5 minutes cache
         })
     })
 });
